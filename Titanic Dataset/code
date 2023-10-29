@@ -1,0 +1,192 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+%matplotlib inline
+import seaborn as sns
+df = pd.read_csv('tested.csv')
+df
+df.info()
+  <class 'pandas.core.frame.DataFrame'>
+RangeIndex: 418 entries, 0 to 417
+Data columns (total 12 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   PassengerId  418 non-null    int64  
+ 1   Survived     418 non-null    int64  
+ 2   Pclass       418 non-null    int64  
+ 3   Name         418 non-null    object 
+ 4   Sex          418 non-null    object 
+ 5   Age          332 non-null    float64
+ 6   SibSp        418 non-null    int64  
+ 7   Parch        418 non-null    int64  
+ 8   Ticket       418 non-null    object 
+ 9   Fare         417 non-null    float64
+ 10  Cabin        91 non-null     object 
+ 11  Embarked     418 non-null    object 
+dtypes: float64(2), int64(5), object(5)
+memory usage: 39.3+ KB
+  df['Fare']
+  0        7.8292
+1        7.0000
+2        9.6875
+3        8.6625
+4       12.2875
+         ...   
+413      8.0500
+414    108.9000
+415      7.2500
+416      8.0500
+417     22.3583
+Name: Fare, Length: 418, dtype: float64
+  #Checking the total null value count  for further data Cleaning process:
+
+df.isna().sum()
+  PassengerId      0
+Survived         0
+Pclass           0
+Name             0
+Sex              0
+Age             86
+SibSp            0
+Parch            0
+Ticket           0
+Fare             1
+Cabin          327
+Embarked         0
+dtype: int64
+  # 1. Data cleaning
+  #Fillinng the Age coulmn null value data:
+
+df['Age'].fillna(df['Age'].mean(),inplace = True)
+  #Filling the Fare coulmn null value data:
+
+df['Fare'].fillna(df['Fare'].mean(),inplace = True)
+  #Checking the NaaN value count after filling
+
+df.isna().sum()
+  PassengerId      0
+Survived         0
+Pclass           0
+Name             0
+Sex              0
+Age              0
+SibSp            0
+Parch            0
+Ticket           0
+Fare             0
+Cabin          327
+Embarked         0
+dtype: int64
+  #Drop the cabin coulmn since we have nothing to deal with it:
+
+df.drop(['Cabin'],axis='columns',inplace=True)
+  df
+  df1 = df[['Pclass', 'Sex']]
+city_tel_ct = df1.groupby(['Pclass', 'Sex']).size().unstack(fill_value=0)
+city_tel_ct
+  # 2. Exploratory data analytics:
+  sns.set(style="whitegrid",palette='pastel')
+sns.countplot(x = 'Survived',data = df)
+  <Axes: xlabel='Survived', ylabel='count'>
+  sns.set(style="whitegrid",palette='pastel')
+sns.countplot(x = df['Embarked'])
+  <Axes: xlabel='Embarked', ylabel='count'>
+  sns.set(style="whitegrid",palette='pastel')
+sns.countplot(x = 'Sex',data = df)
+  <Axes: xlabel='Sex', ylabel='count'>
+  sns.set(style="whitegrid")
+#plt.figure(figsize=(8, 6))
+sns.countplot(x='Sex', hue='Survived', data=df, palette='pastel')
+
+# Add labels and title
+plt.title('Survival Count: Male vs. Female')
+plt.xlabel('Sex')
+plt.ylabel('Count')
+plt.legend(title='Survived', labels=['Not Survived', 'Survived'])
+
+# Display the plot
+plt.show()
+  sns.set(style="whitegrid",palette='pastel')
+plt.hist(df['Age'])
+  (array([ 16.,  16.,  71., 183.,  43.,  37.,  25.,  17.,   9.,   1.]),
+ array([ 0.17 ,  7.753, 15.336, 22.919, 30.502, 38.085, 45.668, 53.251,
+        60.834, 68.417, 76.   ]),
+ <BarContainer object of 10 artists>)
+  sns.set(style="whitegrid",palette='pastel')
+sns.distplot(df['Fare'][df['Survived']==0])
+sns.distplot(df['Fare'][df['Survived']==1])
+  <Axes: xlabel='Fare', ylabel='Density'>
+  sns.set(style="whitegrid")
+sns.distplot(df['Fare'][df['Survived']==1])
+  # Calculate the total price for each sex
+total_price_by_sex = df.groupby('Sex')['Fare'].sum()
+
+# Create a pie chart using Matplotlib
+plt.figure(figsize=(6, 6))
+plt.pie(total_price_by_sex, labels=total_price_by_sex.index, autopct='%1.1f%%', pctdistance=0.6, colors=['skyblue', 'lightcoral'])
+plt.title('Distribution of Prices by Sex',size = '15')
+plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+# Display the plot
+plt.show()
+  #Creating another dataframe named as dm 
+
+dm = df
+  # Removing other columns:
+
+dm.drop(['PassengerId','Name','SibSp','Parch','Ticket','Embarked'],axis = 'columns',inplace = True)
+dm
+  target = df['Survived']
+  dm.drop(['Survived'],axis = 'columns',inplace = True)
+dm
+  #Importing the Label Encoder model
+
+from sklearn.preprocessing import LabelEncoder
+le_gender = LabelEncoder()
+  dm['gender'] = le_gender.fit_transform(dm['Sex'])
+  # Here for male the code is 1 and for female code is 0
+
+dm.drop(['Sex','Fare'],axis = 'columns',inplace = True)
+dm
+  target
+  0      0
+1      1
+2      0
+3      0
+4      1
+      ..
+413    0
+414    1
+415    0
+416    0
+417    0
+Name: Survived, Length: 418, dtype: int64
+  # 4. Model building:
+  from sklearn.model_selection import train_test_split
+
+
+x_train,x_test,y_train,y_test=train_test_split(dm,target,test_size=0.25,random_state=2)
+  # from sklearn.linear_model import LogisticRegression
+
+# model = LogisticRegression()
+# model.fit(x_train,y_train)
+  from sklearn.model_selection import train_test_split
+#classify funtion which is defined by us to cheack the accuracy
+def function_model(model):
+    model.fit(x_train,y_train)
+    print("Accuracy: ",model.score(x_test,y_test))
+  #Logistic regression model testing:
+
+from sklearn.linear_model import LogisticRegression
+model=LogisticRegression()
+function_model(model)
+  Accuracy:  1.0
+  #Decession Tree model testing:
+
+from sklearn.tree import DecisionTreeClassifier
+model=DecisionTreeClassifier()
+function_model(model)
+  Accuracy:  1.0
+  from sklearn.ensemble import RandomForestClassifier
+model=RandomForestClassifier()
+function_model(model)
+  Accuracy:  1.0
